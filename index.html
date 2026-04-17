@@ -3,116 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון קרנות מחקות - Live</title>
+    <title>מחשבון קרנות מחקות - לייב</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700;800&display=swap');
-        body { font-family: 'Assistant', sans-serif; }
-        .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        body { font-family: 'Assistant', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .card-grad { background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%); }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     </style>
 </head>
-<body class="bg-[#0f172a] text-gray-100 p-4 md:p-8">
-    <div class="max-w-5xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10 border-b border-gray-800 pb-6">
-            <div>
-                <h1 class="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                    דשבורד מעקב קרנות
+<body class="p-4 md:p-10">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-slate-800 pb-8">
+            <div class="text-center md:text-right">
+                <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+                    מעקב קרנות מחקות
                 </h1>
-                <p class="text-gray-400 mt-2">מעקב שווי הוגן בזמן אמת מבוסס Google Finance</p>
+                <p class="text-slate-400 mt-2 font-light">נתוני שווי הוגן בזמן אמת</p>
             </div>
-            <div class="mt-4 md:mt-0 flex items-center gap-3 bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700">
-                <div class="w-2 h-2 bg-emerald-500 rounded-full pulse"></div>
-                <div id="status" class="text-sm font-mono uppercase tracking-wider text-emerald-400">מתחבר לנתונים...</div>
+            <div class="mt-6 md:mt-0 px-5 py-2 bg-slate-800/50 rounded-full border border-slate-700 flex items-center gap-3">
+                <div id="led" class="w-3 h-3 bg-amber-500 rounded-full pulse"></div>
+                <div id="status" class="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">מתחבר לנתונים...</div>
             </div>
         </header>
 
-        <div id="dashboard" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div id="dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
             <div class="col-span-full text-center py-20">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-                <p class="text-gray-500">טוען נתונים מהגיליון...</p>
+                <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                <p class="text-slate-500 font-medium">מושך נתונים מהגיליון החדש...</p>
             </div>
         </div>
 
-        <footer class="mt-16 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-gray-500 text-sm">
-                מקור נתונים: <span class="text-gray-300">Google Sheets API (CSV)</span>
+        <footer class="mt-20 pt-10 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-slate-500 text-xs">
+                Source: <span class="text-slate-400 italic">Google Sheets CSV API</span>
             </div>
-            <div class="flex gap-4">
-                <button onclick="fetchData()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded transition-colors">
-                    רענון ידני
-                </button>
-            </div>
+            <button onclick="fetchData()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg transition-all shadow-lg shadow-blue-900/20">
+                רענון נתונים
+            </button>
         </footer>
     </div>
 
     <script>
-        // הלינק המדויק שסיפקת
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQNTNQm_Fk5O1vkA18IzJ5hqbAJuQ9JCXW4TFSFs-fQe3smU6MkDoRTxy-7GkgjJwzB6itO5jfgBFyu/pub?gid=1378409548&single=true&output=csv';
+        // הלינק החדש שסיפקת
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLE8jDhlsiNvpe6jZLmpVssN32mzA2D7UIGwjjnsTbjdpHPBUFVwloOWNRbAZSpM0b_p-AiNvJNoer/pub?gid=0&single=true&output=csv';
 
-        async function fetchData() {
-            console.log("Fetching new data...");
+        function fetchData() {
+            document.getElementById('status').innerText = 'מעדכן...';
+            document.getElementById('led').className = 'w-3 h-3 bg-amber-500 rounded-full pulse';
+
             Papa.parse(SHEET_URL, {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
+                // ניקוי תווים בלתי נראים מהכותרות של גוגל
+                transformHeader: h => h.replace(/[^\w\s\u0590-\u05FF?%()]/gi, '').trim(),
                 complete: function(results) {
-                    renderDashboard(results.data);
-                    document.getElementById('status').innerText = 'LIVE: ' + new Date().toLocaleTimeString('he-IL');
+                    if (results.data && results.data.length > 0) {
+                        renderDashboard(results.data);
+                        document.getElementById('status').innerText = 'LIVE: ' + new Date().toLocaleTimeString('he-IL');
+                        document.getElementById('led').className = 'w-3 h-3 bg-emerald-500 rounded-full';
+                    } else {
+                        showError("לא נמצאו נתונים בגיליון");
+                    }
                 },
-                error: function(err) {
-                    console.error("Error fetching data:", err);
-                    document.getElementById('status').innerText = 'ERROR LOADING DATA';
+                error: function() {
+                    showError("שגיאת חיבור לגיליון");
                 }
             });
+        }
+
+        function showError(msg) {
+            document.getElementById('dashboard').innerHTML = `<div class="col-span-full bg-red-900/20 border border-red-500/50 p-10 rounded-2xl text-center text-red-400 font-bold">${msg}</div>`;
+            document.getElementById('status').innerText = 'ERROR';
+            document.getElementById('led').className = 'w-3 h-3 bg-red-500 rounded-full';
         }
 
         function renderDashboard(data) {
             const container = document.getElementById('dashboard');
             container.innerHTML = '';
 
-            data.forEach(fund => {
-                // בדיקה שהשורה אינה ריקה ומכילה שם קרן
-                if (!fund['שם הקרן'] || fund['שם הקרן'].trim() === "") return;
+            data.forEach(row => {
+                // חילוץ נתונים עם תמיכה בשמות עמודות גמישים
+                const name = row['שם הקרן'] || Object.values(row)[0];
+                if (!name || name.length < 2) return;
 
-                const nav = parseFloat(fund['NAV אחרון (ידני)']) || 0;
-                const theoretical = parseFloat(fund['מחיר תיאורטי מוערך']) || 0;
+                const id = row['מספר קרן'] || Object.values(row)[1];
+                const indexName = row['מדד'] || Object.values(row)[2];
+                const protection = row['הגנת מט"ח?'] || row['הגנת מטח?'] || "שקלית";
+                const nav = parseFloat(row['NAV אחרון (ידני)']) || 0;
+                const fairValue = parseFloat(row['מחיר תיאורטי מוערך']) || 0;
+                const change = (parseFloat(row['שינוי מדד %']) * 100) || 0;
                 
-                // חישוב אחוז שינוי יומי (מהמדד)
-                const changePercent = (parseFloat(fund['שינוי מדד %']) * 100) || 0;
-                const isPositive = changePercent >= 0;
+                const isPos = change >= 0;
 
                 const card = document.createElement('div');
-                card.className = 'bg-gray-800/40 backdrop-blur-sm p-6 rounded-2xl border border-gray-700/50 shadow-xl hover:shadow-blue-900/10 hover:border-blue-500/50 transition-all duration-300';
+                card.className = 'card-grad p-8 rounded-3xl border border-slate-700/50 shadow-2xl hover:border-blue-500/40 transition-all duration-500 group';
                 
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-6">
+                    <div class="flex justify-between items-start mb-8">
                         <div>
-                            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">#${fund['מספר קרן']}</span>
-                            <h2 class="text-2xl font-extrabold text-white mt-1">${fund['שם הקרן']}</h2>
-                            <p class="text-blue-400 text-sm font-medium">${fund['מדד']}</p>
+                            <span class="text-[10px] font-mono text-slate-500 tracking-tighter uppercase">ID: ${id}</span>
+                            <h2 class="text-2xl font-black text-white group-hover:text-blue-300 transition-colors">${name}</h2>
+                            <p class="text-cyan-400 text-sm font-semibold">${indexName}</p>
                         </div>
-                        <div class="text-right">
-                             <span class="px-3 py-1 bg-gray-900 text-gray-400 text-[10px] rounded-full border border-gray-700">
-                                ${fund['הגנת מט"ח?'] || 'שקלית'}
-                             </span>
+                        <div class="bg-slate-900/80 px-3 py-1 rounded-md border border-slate-700 text-[10px] font-bold text-slate-400 uppercase">
+                            ${protection}
                         </div>
                     </div>
-                    
-                    <div class="flex items-end justify-between border-t border-gray-700/50 pt-6">
+
+                    <div class="flex justify-between items-end border-t border-slate-800 pt-6">
                         <div>
-                            <p class="text-[10px] text-gray-500 uppercase mb-1">NAV אחרון (סגירה)</p>
-                            <p class="text-xl font-bold text-gray-300">${nav.toFixed(2)}</p>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">NAV אחרון</p>
+                            <p class="text-2xl font-bold text-slate-300">${nav.toFixed(2)}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[10px] text-blue-400 font-bold uppercase mb-1">שווי הוגן מוערך</p>
-                            <p class="text-4xl font-black ${isPositive ? 'text-emerald-400' : 'text-rose-400'} tracking-tighter">
-                                ${theoretical.toLocaleString('he-IL', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                            </p>
-                            <p class="text-sm font-bold ${isPositive ? 'text-emerald-500' : 'text-rose-500'} mt-1">
-                                ${isPositive ? '▲' : '▼'} ${Math.abs(changePercent).toFixed(2)}%
-                            </p>
+                            <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">שווי הוגן</p>
+                            <div class="text-5xl font-black ${isPos ? 'text-emerald-400' : 'text-rose-400'} tracking-tighter">
+                                ${fairValue.toLocaleString('he-IL', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            </div>
+                            <div class="flex items-center justify-end gap-1 font-bold mt-1 ${isPos ? 'text-emerald-500' : 'text-rose-500'}">
+                                <span>${isPos ? '▲' : '▼'}</span>
+                                <span>${Math.abs(change).toFixed(2)}%</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -120,11 +135,9 @@
             });
         }
 
-        // טעינה ראשונית
         fetchData();
-        
-        // עדכון אוטומטי כל 2 דקות (כדי לא להעמיס על גוגל)
-        setInterval(fetchData, 120000);
+        // רענון אוטומטי כל דקה
+        setInterval(fetchData, 60000);
     </script>
 </body>
 </html>
