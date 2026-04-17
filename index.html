@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון קרנות מחקות - לייב</title>
+    <title>מחשבון קרנות מחקות - Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
@@ -19,26 +19,27 @@
         <header class="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-slate-800 pb-8">
             <div class="text-center md:text-right">
                 <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-                    מעקב קרנות מחקות
+                    דשבורד מעקב קרנות
                 </h1>
-                <p class="text-slate-400 mt-2 font-light">נתוני שווי הוגן בזמן אמת</p>
+                <p class="text-slate-400 mt-2 font-light">נתוני שווי הוגן בזמן אמת מבוסס Google Finance</p>
             </div>
             <div class="mt-6 md:mt-0 px-5 py-2 bg-slate-800/50 rounded-full border border-slate-700 flex items-center gap-3">
                 <div id="led" class="w-3 h-3 bg-amber-500 rounded-full pulse"></div>
-                <div id="status" class="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">מתחבר לנתונים...</div>
+                <div id="status" class="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">מתחבר...</div>
             </div>
         </header>
 
-        <div id="dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+        <div id="dashboard" class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="col-span-full text-center py-20">
                 <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-                <p class="text-slate-500 font-medium">מושך נתונים מהגיליון החדש...</p>
+                <p class="text-slate-500 font-medium">מושך נתונים מהגיליון...</p>
             </div>
         </div>
 
         <footer class="mt-20 pt-10 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="text-slate-500 text-xs">
-                Source: <span class="text-slate-400 italic">Google Sheets CSV API</span>
+            <div class="text-slate-500 text-xs text-center md:text-right">
+                <p>מקור נתונים: <span class="text-slate-400 italic">Google Sheets API (CSV)</span></p>
+                <p class="mt-1">החישוב מתבצע לפי: NAV × (1 + Δ%Index + Δ%FX)</p>
             </div>
             <button onclick="fetchData()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg transition-all shadow-lg shadow-blue-900/20">
                 רענון נתונים
@@ -47,7 +48,7 @@
     </div>
 
     <script>
-        // הלינק החדש שסיפקת
+        // הקישור שסיפקת - מוגדר כ-CSV
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLE8jDhlsiNvpe6jZLmpVssN32mzA2D7UIGwjjnsTbjdpHPBUFVwloOWNRbAZSpM0b_p-AiNvJNoer/pub?gid=0&single=true&output=csv';
 
         function fetchData() {
@@ -58,7 +59,7 @@
                 download: true,
                 header: true,
                 skipEmptyLines: true,
-                // ניקוי תווים בלתי נראים מהכותרות של גוגל
+                // ניקוי תווים בלתי נראים מהכותרות של גוגל (מניעת תקלות טעינה)
                 transformHeader: h => h.replace(/[^\w\s\u0590-\u05FF?%()]/gi, '').trim(),
                 complete: function(results) {
                     if (results.data && results.data.length > 0) {
@@ -66,11 +67,11 @@
                         document.getElementById('status').innerText = 'LIVE: ' + new Date().toLocaleTimeString('he-IL');
                         document.getElementById('led').className = 'w-3 h-3 bg-emerald-500 rounded-full';
                     } else {
-                        showError("לא נמצאו נתונים בגיליון");
+                        showError("לא נמצאו נתונים תקינים בגיליון");
                     }
                 },
                 error: function() {
-                    showError("שגיאת חיבור לגיליון");
+                    showError("שגיאת חיבור לגיליון - וודא שהוא מפורסם כ-CSV");
                 }
             });
         }
@@ -86,18 +87,26 @@
             container.innerHTML = '';
 
             data.forEach(row => {
-                // חילוץ נתונים עם תמיכה בשמות עמודות גמישים
+                // חילוץ נתונים
                 const name = row['שם הקרן'] || Object.values(row)[0];
                 if (!name || name.length < 2) return;
 
-                const id = row['מספר קרן'] || Object.values(row)[1];
-                const indexName = row['מדד'] || Object.values(row)[2];
-                const protection = row['הגנת מט"ח?'] || row['הגנת מטח?'] || "שקלית";
                 const nav = parseFloat(row['NAV אחרון (ידני)']) || 0;
                 const fairValue = parseFloat(row['מחיר תיאורטי מוערך']) || 0;
-                const change = (parseFloat(row['שינוי מדד %']) * 100) || 0;
                 
-                const isPos = change >= 0;
+                // תיקון חישוב האחוזים לתצוגה:
+                // אם גוגל נותן 0.015 זה יוכפל ב-100 ל-1.5%. אם הוא נותן 1.5 זה יישאר 1.5%.
+                let changeRaw = parseFloat(row['שינוי מדד %']) || 0;
+                let changeDisplay = Math.abs(changeRaw) < 0.2 ? changeRaw * 100 : changeRaw;
+                
+                // בקרן נסדא"ק (חשופה) אנחנו רוצים לראות את סך השינוי המשולב (מדד + דולר)
+                if (name.includes("Nasdaq")) {
+                    const fxChange = parseFloat(row['שינוי מט"ח %']) || 0;
+                    let fxDisplay = Math.abs(fxChange) < 0.2 ? fxChange * 100 : fxChange;
+                    changeDisplay += fxDisplay;
+                }
+                
+                const isPos = changeDisplay >= 0;
 
                 const card = document.createElement('div');
                 card.className = 'card-grad p-8 rounded-3xl border border-slate-700/50 shadow-2xl hover:border-blue-500/40 transition-all duration-500 group';
@@ -105,28 +114,28 @@
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-8">
                         <div>
-                            <span class="text-[10px] font-mono text-slate-500 tracking-tighter uppercase">ID: ${id}</span>
+                            <span class="text-[10px] font-mono text-slate-500 tracking-tighter uppercase">ID: ${row['מספר קרן']}</span>
                             <h2 class="text-2xl font-black text-white group-hover:text-blue-300 transition-colors">${name}</h2>
-                            <p class="text-cyan-400 text-sm font-semibold">${indexName}</p>
+                            <p class="text-cyan-400 text-sm font-semibold">${row['מדד']}</p>
                         </div>
-                        <div class="bg-slate-900/80 px-3 py-1 rounded-md border border-slate-700 text-[10px] font-bold text-slate-400 uppercase">
-                            ${protection}
+                        <div class="bg-slate-900/80 px-3 py-1 rounded-md border border-slate-700 text-[10px] font-bold text-slate-400">
+                            ${row['הגנת מט"ח?'] || "שקלית"}
                         </div>
                     </div>
 
                     <div class="flex justify-between items-end border-t border-slate-800 pt-6">
                         <div>
-                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">NAV אחרון</p>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">NAV אחרון (סגירה)</p>
                             <p class="text-2xl font-bold text-slate-300">${nav.toFixed(2)}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">שווי הוגן</p>
+                            <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">שווי הוגן מוערך</p>
                             <div class="text-5xl font-black ${isPos ? 'text-emerald-400' : 'text-rose-400'} tracking-tighter">
                                 ${fairValue.toLocaleString('he-IL', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                             </div>
                             <div class="flex items-center justify-end gap-1 font-bold mt-1 ${isPos ? 'text-emerald-500' : 'text-rose-500'}">
                                 <span>${isPos ? '▲' : '▼'}</span>
-                                <span>${Math.abs(change).toFixed(2)}%</span>
+                                <span>${Math.abs(changeDisplay).toFixed(2)}%</span>
                             </div>
                         </div>
                     </div>
@@ -135,8 +144,9 @@
             });
         }
 
+        // הפעלה ראשונית
         fetchData();
-        // רענון אוטומטי כל דקה
+        // רענון אוטומטי בכל דקה
         setInterval(fetchData, 60000);
     </script>
 </body>
