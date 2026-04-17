@@ -3,56 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון קרנות מחקות - Expert Version</title>
+    <title>Portfolio Live Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700;800&display=swap');
-        body { font-family: 'Assistant', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .card-grad { background: linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%); }
+        body { font-family: 'Assistant', sans-serif; background-color: #020617; color: #f8fafc; }
+        .card-grad { background: linear-gradient(145deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%); backdrop-filter: blur(10px); }
+        .profit-text { color: #10b981; }
+        .loss-text { color: #f43f5e; }
         .pulse { animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-4 md:p-8">
     <div class="max-w-6xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-slate-800 pb-8">
-            <div class="text-center md:text-right">
-                <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                    דשבורד מעקב קרנות
-                </h1>
-                <p class="text-slate-400 mt-2 font-light italic">מערכת מעקב שווי הוגן וניתוח דיוק</p>
+        
+        <div class="mb-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-900/50 p-6 rounded-3xl border border-slate-800 shadow-xl">
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">שווי תיק כולל</p>
+                <div id="total-value" class="text-4xl font-black text-white tracking-tighter">₪ 0.00</div>
             </div>
-            <div class="mt-6 md:mt-0 px-5 py-2 bg-slate-800/50 rounded-full border border-slate-700 flex items-center gap-3 shadow-inner">
+            <div class="bg-slate-900/50 p-6 rounded-3xl border border-slate-800 shadow-xl">
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">רווח/הפסד כולל</p>
+                <div id="total-pnl" class="text-3xl font-black tracking-tighter">₪ 0.00</div>
+                <p id="total-pnl-percent" class="text-sm font-bold mt-1 opacity-80">0.00%</p>
+            </div>
+            <div class="flex items-center justify-between bg-slate-900/50 p-6 rounded-3xl border border-slate-800 shadow-xl">
                 <div id="led" class="w-3 h-3 bg-amber-500 rounded-full pulse"></div>
-                <div id="status" class="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-widest">טוען נתונים...</div>
-            </div>
-        </header>
-
-        <div id="dashboard" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="col-span-full text-center py-20 italic text-slate-500 animate-pulse text-lg">
-                מתחבר ל-Google Sheets...
+                <div id="status" class="text-xs font-mono font-bold text-amber-400 uppercase">מסתנכרן...</div>
+                <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all">רענון</button>
             </div>
         </div>
 
-        <footer class="mt-20 pt-10 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="text-slate-500 text-[10px] text-center md:text-right space-y-1">
-                <p>מקור: <span class="text-slate-400 italic">Google Sheets CSV API</span></p>
-                <p class="font-bold text-slate-400">כפתור הרענון מושך את הגרסה האחרונה שפורסמה בגיליון.</p>
-            </div>
-            <button onclick="fetchData()" class="group relative px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-900/40 active:scale-95">
-                <span class="relative z-10">רענון נתונים</span>
-                <div class="absolute inset-0 bg-blue-400 blur-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
-            </button>
+        <div id="dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            <div class="col-span-full text-center py-20 text-slate-500 italic text-lg">טוען נתונים מהגיליון...</div>
+        </div>
+
+        <footer class="mt-16 pt-8 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-500">
+            <div>Data: Google Sheets API | Live: Google Finance</div>
+            <div id="last-update" class="italic"></div>
         </footer>
     </div>
 
     <script>
-        // הלינק המדויק שלך
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRLE8jDhlsiNvpe6jZLmpVssN32mzA2D7UIGwjjnsTbjdpHPBUFVwloOWNRbAZSpM0b_p-AiNvJNoer/pub?gid=0&single=true&output=csv';
 
         function fetchData() {
-            document.getElementById('status').innerText = 'מבצע Fetch...';
+            document.getElementById('status').innerText = 'מבצע FETCH...';
             document.getElementById('led').className = 'w-3 h-3 bg-amber-500 rounded-full pulse';
 
             Papa.parse(SHEET_URL, {
@@ -63,25 +61,20 @@
                 complete: function(results) {
                     if (results.data && results.data.length > 0) {
                         renderDashboard(results.data);
-                        document.getElementById('status').innerText = 'מחובר: ' + new Date().toLocaleTimeString('he-IL');
+                        document.getElementById('status').innerText = 'LIVE';
+                        document.getElementById('last-update').innerText = 'עדכון אחרון: ' + new Date().toLocaleTimeString('he-IL');
                         document.getElementById('led').className = 'w-3 h-3 bg-emerald-500 rounded-full';
-                    } else {
-                        showError("הגיליון ריק או לא נגיש");
                     }
-                },
-                error: () => showError("שגיאת חיבור (CORS או URL שגוי)")
+                }
             });
-        }
-
-        function showError(msg) {
-            document.getElementById('dashboard').innerHTML = `<div class="col-span-full bg-red-900/10 border border-red-500/20 p-10 rounded-2xl text-center text-red-400 font-bold">${msg}</div>`;
-            document.getElementById('status').innerText = 'ERROR';
-            document.getElementById('led').className = 'w-3 h-3 bg-red-500 rounded-full';
         }
 
         function renderDashboard(data) {
             const container = document.getElementById('dashboard');
             container.innerHTML = '';
+            
+            let totalPortfolioValue = 0;
+            let totalInvestment = 0;
 
             data.forEach(row => {
                 const name = row['שם הקרן'] || Object.values(row)[0];
@@ -89,57 +82,80 @@
 
                 const nav = parseFloat(row['NAV אחרון (ידני)']) || 0;
                 const fairValue = parseFloat(row['מחיר תיאורטי מוערך']) || 0;
-                const protection = row['הגנת מט"ח?'] || row['הגנת מטח?'] || Object.values(row)[3] || "שקלית";
+                const quantity = parseFloat(row['כמות יחידות']) || 0;
+                const buyPrice = parseFloat(row['מחיר קנייה']) || 0;
                 
-                // חישוב אחוז השינוי האמיתי והסופי (השווי ההוגן מול ה-NAV)
-                const totalChange = nav > 0 ? ((fairValue - nav) / nav) * 100 : 0;
-                const isPos = totalChange >= 0;
+                // חישובי שווי
+                const currentHoldingValue = (fairValue * quantity) / 100;
+                const originalCost = (buyPrice * quantity) / 100;
+                
+                totalPortfolioValue += currentHoldingValue;
+                totalInvestment += originalCost;
 
-                // חילוץ ציון דיוק (אם קיים בעמודה בשיטס)
-                const accuracy = row['סטייה היסטורית'] || "";
+                // רווח/הפסד (P&L) מאז הקנייה
+                const profitAmount = currentHoldingValue - originalCost;
+                const profitPercent = buyPrice > 0 ? ((fairValue - buyPrice) / buyPrice) * 100 : 0;
+                
+                // שינוי יומי (ביחס ל-NAV)
+                const dailyChange = nav > 0 ? ((fairValue - nav) / nav) * 100 : 0;
+                const isDailyPos = dailyChange >= 0;
+                const isTotalPos = profitAmount >= 0;
 
                 const card = document.createElement('div');
-                card.className = 'card-grad p-8 rounded-3xl border border-slate-700/50 shadow-2xl hover:border-blue-500/40 transition-all duration-500';
+                card.className = 'card-grad p-8 rounded-3xl border border-slate-800 shadow-2xl hover:border-blue-500/30 transition-all';
                 
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-8">
+                    <div class="flex justify-between items-start mb-6 border-b border-slate-800 pb-4">
                         <div>
-                            <span class="text-[9px] font-mono text-slate-500 uppercase tracking-tighter">ID: ${row['מספר קרן']}</span>
-                            <h2 class="text-2xl font-black text-white leading-tight">${name}</h2>
-                            <p class="text-cyan-400 text-xs font-bold mt-1 uppercase tracking-wide">${row['מדד']}</p>
+                            <span class="text-[9px] font-mono text-slate-500 uppercase">#${row['מספר קרן']}</span>
+                            <h2 class="text-xl font-black text-white leading-tight">${name}</h2>
+                            <p class="text-cyan-400 text-xs font-bold tracking-tight">${row['מדד']}</p>
                         </div>
-                        <div class="flex flex-col items-end gap-2">
-                            <span class="bg-slate-900 px-3 py-1 rounded-md border border-slate-700 text-[9px] font-bold text-slate-400 uppercase">
-                                ${protection}
-                            </span>
-                            ${accuracy ? `<span class="text-[9px] text-emerald-400 font-bold tracking-widest bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-900/50 italic">ACCURACY: ${accuracy}</span>` : ''}
+                        <div class="text-right">
+                            <span class="text-[10px] text-blue-400 font-bold tracking-widest uppercase">שווי נוכחי</span>
+                            <p class="text-2xl font-black text-white">₪ ${currentHoldingValue.toLocaleString('he-IL', {maximumFractionDigits: 0})}</p>
                         </div>
                     </div>
 
-                    <div class="flex justify-between items-end border-t border-slate-800 pt-6">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <p class="text-[10px] text-slate-500 font-bold uppercase mb-1 italic">NAV אחרון (Base)</p>
-                            <p class="text-2xl font-bold text-slate-300 font-mono tracking-tight">${nav.toFixed(2)}</p>
+                            <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">רווח/הפסד מצטבר</p>
+                            <p class="text-xl font-black ${isTotalPos ? 'profit-text' : 'loss-text'}">
+                                ₪ ${profitAmount.toLocaleString('he-IL', {maximumFractionDigits: 0})}
+                            </p>
+                            <p class="text-xs font-bold ${isTotalPos ? 'profit-text' : 'loss-text'} opacity-80">
+                                ${isTotalPos ? '▲' : '▼'} ${Math.abs(profitPercent).toFixed(2)}%
+                            </p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-[10px] text-blue-400 font-bold uppercase mb-1 italic">Fair Value (Live)</p>
-                            <div class="text-5xl font-black ${isPos ? 'text-emerald-400' : 'text-rose-400'} tracking-tighter font-mono leading-none">
-                                ${fairValue.toLocaleString('he-IL', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                            </div>
-                            <div class="flex items-center justify-end gap-1 font-extrabold mt-3 ${isPos ? 'text-emerald-500' : 'text-rose-500'}">
-                                <span class="text-xs">${isPos ? '▲' : '▼'}</span>
-                                <span class="text-xl tracking-tight">${Math.abs(totalChange).toFixed(2)}%</span>
-                            </div>
+                        <div class="text-left">
+                            <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">שינוי יומי (Fair Value)</p>
+                            <p class="text-xl font-bold ${isDailyPos ? 'text-emerald-400' : 'text-rose-400'}">
+                                ${fairValue.toFixed(2)}
+                            </p>
+                            <p class="text-xs font-bold ${isDailyPos ? 'text-emerald-500' : 'text-rose-500'}">
+                                ${isDailyPos ? '▲' : '▼'} ${Math.abs(dailyChange).toFixed(2)}%
+                            </p>
                         </div>
                     </div>
                 `;
                 container.appendChild(card);
             });
+
+            // עדכון הבאנר העליון
+            document.getElementById('total-value').innerText = `₪ ${totalPortfolioValue.toLocaleString('he-IL', {maximumFractionDigits: 0})}`;
+            const totalPnL = totalPortfolioValue - totalInvestment;
+            const totalPnLPercent = totalInvestment > 0 ? (totalPnL / totalInvestment) * 100 : 0;
+            
+            const pnlElement = document.getElementById('total-pnl');
+            pnlElement.innerText = `₪ ${totalPnL.toLocaleString('he-IL', {maximumFractionDigits: 0})}`;
+            pnlElement.className = `text-3xl font-black tracking-tighter ${totalPnL >= 0 ? 'profit-text' : 'loss-text'}`;
+            
+            const pnlPercentElement = document.getElementById('total-pnl-percent');
+            pnlPercentElement.innerText = `${totalPnL >= 0 ? '▲' : '▼'} ${Math.abs(totalPnLPercent).toFixed(2)}% מאז הקנייה`;
+            pnlPercentElement.className = `text-sm font-bold mt-1 ${totalPnL >= 0 ? 'profit-text' : 'loss-text'}`;
         }
 
-        // טעינה ראשונית
         fetchData();
-        // רענון אוטומטי כל 60 שניות
         setInterval(fetchData, 60000);
     </script>
 </body>
